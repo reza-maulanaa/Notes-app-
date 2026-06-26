@@ -8,11 +8,11 @@ export default auth(async (req) => {
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   if (!isLoggedIn && !isAuthPage) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
   if (isLoggedIn && isAuthPage) {
-    return NextResponse.redirect(new URL("/notes", req.url));
+    return NextResponse.redirect(new URL("/notes", req.nextUrl));
   }
 
   return NextResponse.next();
