@@ -6,9 +6,16 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { signOut } from "@/auth";
+import NoteForm from "./NoteForm";
 
-export default async function NotesPage() {
+interface Props {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default async function NotesPage({ searchParams }: Props) {
+  const { error } = await searchParams;
   const session = await auth();
+
   if (!session?.user?.id) redirect("/login");
 
   const allNotes = await db
@@ -71,84 +78,40 @@ export default async function NotesPage() {
           </p>
         </header>
 
-        {/* Create form */}
-        <form
-          action={createNote}
-          style={{
-            marginBottom: "40px",
-            padding: "20px",
-            backgroundColor: "var(--color-surface)",
-            borderRadius: "var(--radius-lg)",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-          <div style={{ marginBottom: "12px" }}>
-            <input
-              name="title"
-              placeholder="Judul"
-              required
-              autoComplete="off"
-              style={{
-                width: "100%",
-                border: "none",
-                background: "transparent",
-                fontSize: "15px",
-                fontWeight: 600,
-                color: "var(--color-ink)",
-                outline: "none",
-                fontFamily: "inherit",
-                letterSpacing: "-0.01em",
-                padding: 0,
-              }}
-            />
-          </div>
+        {/* Error message — letakkan di sini, SETELAH header */}
+        {error === "limit_reached_basic" && (
           <div
             style={{
-              height: "1px",
-              backgroundColor: "var(--color-border)",
-              marginBottom: "12px",
+              padding: "12px 16px",
+              backgroundColor: "#fef2f2",
+              border: "1px solid #fecaca",
+              borderRadius: "8px",
+              marginBottom: "24px",
+              fontSize: "13px",
+              color: "#dc2626",
             }}
-          />
-          <div style={{ marginBottom: "16px" }}>
-            <textarea
-              name="content"
-              placeholder="Tulis catatan..."
-              required
-              rows={3}
-              style={{
-                width: "100%",
-                border: "none",
-                background: "transparent",
-                fontSize: "14px",
-                color: "var(--color-ink)",
-                outline: "none",
-                resize: "none",
-                fontFamily: "inherit",
-                lineHeight: 1.6,
-                padding: 0,
-              }}
-            />
+          >
+            Batas maksimal 5 notes untuk akun free. Upgrade ke premium!
           </div>
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button
-              type="submit"
-              style={{
-                backgroundColor: "var(--color-primary)",
-                color: "var(--color-primary-fg)",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                padding: "7px 16px",
-                fontSize: "13px",
-                fontWeight: 500,
-                cursor: "pointer",
-                fontFamily: "inherit",
-                letterSpacing: "0.01em",
-              }}
-            >
-              Simpan
-            </button>
+        )}
+        {error === "limit_reached_premium" && (
+          <div
+            style={{
+              padding: "12px 16px",
+              backgroundColor: "#fef2f2",
+              border: "1px solid #fecaca",
+              borderRadius: "8px",
+              marginBottom: "24px",
+              fontSize: "13px",
+              color: "#dc2626",
+            }}
+          >
+            Batas maksimal 15 notes untuk akun premium. Upgrade ke Max!
           </div>
-        </form>
+        )}
+
+        {/* Create form */}
+        <NoteForm />
 
         {/* Notes list */}
         {allNotes.length === 0 ? (

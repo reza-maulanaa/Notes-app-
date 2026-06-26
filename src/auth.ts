@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
+import Google from "next-auth/providers/google";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -12,6 +13,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -21,33 +26,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
-        console.log("1. Mencari user dengan email:", email);
-
         const user = await db
           .select()
           .from(users)
           .where(eq(users.email, email))
           .then((res) => res[0]);
 
-        console.log("2. User ditemukan:", user);
+        if (!user) return null;
 
-        if (!user) {
-          console.log("3. User tidak ditemukan, return null");
+        if (!user.password) {
           return null;
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
-        console.log("4. Password cocok?", passwordMatch);
 
         if (!passwordMatch) return null;
 
-        return { id: String(user.id), email: user.email };
+        return {
+          id: String(user.id),
+          email: user.email,
+          role: String(user.role),
+        };
       },
     }),
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "github") {
+      if (account?.provider !== "credentials") {
         const existingUser = await db
           .select()
           .from(users)
@@ -57,7 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!existingUser) {
           await db.insert(users).values({
             email: user.email!,
-            password: "",
+            password: null,
           });
         }
       }
@@ -65,7 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     async jwt({ token, user, account }) {
-      if (account?.provider === "github") {
+      if (account && account?.provider !== "credentials") {
         //cari database ID berdasarkan email
         const dbUser = await db
           .select()
@@ -73,14 +78,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .where(eq(users.email, token.email!))
           .then((res) => res[0]);
 
-        if (dbUser) token.id = String(dbUser.id);
+        if (dbUser) {
+          token.id = String(dbUser.id);
+          token.role = dbUser.role;
+        }
       } else if (user) {
         token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },
     session({ session, token }) {
       session.user.id = token.id as string;
+      session.user.role = token.role as string;
       return session;
     },
   },
@@ -89,5 +99,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60,
   },
 });

@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { updateNote } from "@/app/notes/action";
 import Link from "next/link";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -12,6 +14,10 @@ interface Props {
 export default async function EditNotePage({ params }: Props) {
   const { id } = await params;
 
+  const session = await auth();
+
+  if (!session?.user?.id) redirect("/login");
+
   const note = await db
     .select()
     .from(notes)
@@ -19,6 +25,8 @@ export default async function EditNotePage({ params }: Props) {
     .then((res) => res[0]);
 
   if (!note) notFound();
+
+  if (note.userId !== Number(session.user.id)) notFound();
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--color-bg)" }}>

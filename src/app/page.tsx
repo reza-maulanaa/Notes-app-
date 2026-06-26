@@ -1,6 +1,5 @@
-import NotesPage from "./notes/page";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  console.log("ini jalan dimana?");
-  return <NotesPage />;
+  redirect("/notes");
 }
