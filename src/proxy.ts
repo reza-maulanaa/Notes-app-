@@ -8,11 +8,15 @@ export default auth(async (req) => {
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   if (!isLoggedIn && !isAuthPage) {
-    return NextResponse.redirect(new URL("/login", req.nextUrl));
+    const url = req.nextUrl.clone();   // ← clone URL yang udah valid
+    url.pathname = "/login";           // ← ganti path-nya doang
+    return NextResponse.redirect(url);
   }
 
   if (isLoggedIn && isAuthPage) {
-    return NextResponse.redirect(new URL("/notes", req.nextUrl));
+    const url = req.nextUrl.clone();
+    url.pathname = "/notes";
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
