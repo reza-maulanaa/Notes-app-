@@ -36,7 +36,7 @@ const MOCK_CARDS = [
     emoji: "🗒️",
     title: "Meeting Q3",
     lines: ["• Diskusi roadmap produk", "• Review timeline sprint", "• Budget planning 2025"],
-    rotate: "-rotate-3",
+    baseRot: -3,
     position: "top-6 right-6",
     depth: 0.04,
   },
@@ -45,7 +45,7 @@ const MOCK_CARDS = [
     emoji: "💡",
     title: "Ide Startup",
     lines: ["Aplikasi minimalis untuk", "mencatat setiap inspirasi", "sebelum menghilang..."],
-    rotate: "rotate-2",
+    baseRot: 2,
     position: "top-44 right-28",
     depth: 0.09,
   },
@@ -54,11 +54,13 @@ const MOCK_CARDS = [
     emoji: "📖",
     title: "Bacaan Minggu Ini",
     lines: ["☐ Atomic Habits", "☑ Deep Work", "☐ The Creative Act"],
-    rotate: "-rotate-1",
+    baseRot: -1,
     position: "top-80 right-4",
     depth: 0.06,
   },
 ];
+
+const ORB_DEPTHS = [0.03, 0.05, 0.04];
 
 export function HeroSection() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -77,133 +79,180 @@ export function HeroSection() {
   const magneticRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
+    const root = heroRef.current;
+    if (!root) return;
+
+    // ---- Declarative animations (auto-reverted by ctx.revert) ----
+    // Channel split to avoid property conflicts:
+    //   entrance  -> opacity / scale / y (one-shot)
+    //   float     -> yPercent / rotation (looping)
+    //   drift     -> xPercent / yPercent (looping)
+    //   parallax  -> x / y (pointer, set up separately below)
     const ctx = gsap.context(() => {
+      const cardEls = gsap.utils.toArray<HTMLElement>(".mock-card");
+
+      // Base rotation per card (independent of float/parallax channels).
+      cardEls.forEach((card) => {
+        gsap.set(card, { rotation: Number(card.dataset.rot ?? 0) });
+      });
+
+      // Ambient layers fade in parallel — they never block the text/CTA path.
+      gsap.from([orb1Ref.current, orb2Ref.current, orb3Ref.current], {
+        opacity: 0,
+        scale: 0.7,
+        duration: 1.2,
+        stagger: 0.15,
+        ease: "power2.out",
+      });
+
+      // Critical path: nav → badge → title → subtitle → CTA → stats, all in ~1s.
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-      tl.from(navRef.current, { y: -24, opacity: 0, duration: 0.6 });
-
-      tl.from(
-        [orb1Ref.current, orb2Ref.current, orb3Ref.current],
-        { opacity: 0, scale: 0.6, duration: 1.4, stagger: 0.18, ease: "power2.out" },
-        "-=0.4"
-      );
-
-      tl.from(badgeRef.current, { y: 16, opacity: 0, duration: 0.5 }, "-=0.9");
-
+      tl.from(navRef.current, { y: -20, opacity: 0, duration: 0.5 }, 0);
+      tl.from(badgeRef.current, { y: 14, opacity: 0, duration: 0.45 }, 0.1);
       tl.from(
         [line1Ref.current, line2Ref.current],
-        { y: 52, opacity: 0, duration: 0.85, stagger: 0.14, ease: "power4.out" },
-        "-=0.6"
+        { y: 40, opacity: 0, duration: 0.6, stagger: 0.1, ease: "power4.out" },
+        0.2
       );
-
-      tl.from(subtitleRef.current, { y: 20, opacity: 0, duration: 0.6 }, "-=0.45");
-
-      tl.from(
-        ctaRef.current!.children,
-        { y: 16, opacity: 0, stagger: 0.1, duration: 0.5 },
-        "-=0.3"
-      );
-
-      tl.from(
-        statsRef.current!.children,
-        { y: 14, opacity: 0, stagger: 0.08, duration: 0.45 },
-        "-=0.25"
-      );
-
-      const cards = cardsRef.current?.querySelectorAll(".mock-card");
-      if (cards) {
+      tl.from(subtitleRef.current, { y: 16, opacity: 0, duration: 0.45 }, 0.45);
+      tl.from(ctaRef.current, { y: 14, opacity: 0, duration: 0.45 }, 0.6);
+      if (statsRef.current) {
         tl.from(
-          cards,
-          { y: 36, opacity: 0, scale: 0.9, stagger: 0.12, duration: 0.7 },
-          "-=0.7"
+          statsRef.current.children,
+          { y: 12, opacity: 0, stagger: 0.07, duration: 0.4 },
+          0.75
         );
       }
 
-      const featureItems = featuresRef.current?.querySelectorAll(".feature-item");
-      if (featureItems) {
-        tl.from(featureItems, { y: 28, opacity: 0, stagger: 0.1, duration: 0.55 }, "-=0.2");
+      // Cards + features fade in alongside, slightly delayed.
+      if (cardEls.length) {
+        gsap.from(cardEls, {
+          autoAlpha: 0,
+          scale: 0.92,
+          stagger: 0.1,
+          duration: 0.6,
+          delay: 0.35,
+          ease: "power3.out",
+        });
+      }
+      if (featuresRef.current) {
+        gsap.from(featuresRef.current.querySelectorAll(".feature-item"), {
+          y: 24,
+          opacity: 0,
+          stagger: 0.08,
+          duration: 0.5,
+          delay: 0.6,
+          ease: "power3.out",
+        });
       }
 
-      // Continuous float on cards
-      cards?.forEach((card, i) => {
+      // Continuous float (yPercent + rotation — independent from parallax x/y).
+      cardEls.forEach((card, i) => {
+        const baseRot = Number(card.dataset.rot ?? 0);
+        const dir = i % 2 === 0 ? -1 : 1;
         gsap.to(card, {
-          y: i % 2 === 0 ? -12 : 10,
-          rotation: i % 2 === 0 ? "-=1.5" : "+=1",
+          yPercent: dir * 6,
+          rotation: baseRot + dir * 1.5,
           duration: 2.8 + i * 0.5,
           repeat: -1,
           yoyo: true,
           ease: "sine.inOut",
-          delay: i * 0.35,
+          delay: 0.6 + i * 0.35,
         });
       });
 
-      // Orb drift
-      gsap.to(orb1Ref.current, { x: 28, y: -20, duration: 7, repeat: -1, yoyo: true, ease: "sine.inOut" });
-      gsap.to(orb2Ref.current, { x: -24, y: 18, duration: 9, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 1 });
-      gsap.to(orb3Ref.current, { x: 18, y: 22, duration: 8, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 0.5 });
-
-      // ---- Mouse parallax (desktop only) ----
-      const mq = window.matchMedia("(min-width: 1024px) and (pointer: fine)");
-      if (mq.matches) {
-        const cardEls = Array.from(cardsRef.current?.querySelectorAll(".mock-card") ?? []);
-        const cardMovers = cardEls.map((el) => ({
-          el,
-          xTo: gsap.quickTo(el, "x", { duration: 0.8, ease: "power3" }),
-          yTo: gsap.quickTo(el, "y", { duration: 0.8, ease: "power3" }),
-          depth: Number((el as HTMLElement).dataset.depth ?? 0.05),
-        }));
-        const orbMovers = [
-          { el: orb1Ref.current, depth: 0.03 },
-          { el: orb2Ref.current, depth: 0.05 },
-          { el: orb3Ref.current, depth: 0.04 },
-        ].map(({ el, depth }) => ({
-          xTo: gsap.quickTo(el, "x", { duration: 1.2, ease: "power3" }),
-          yTo: gsap.quickTo(el, "y", { duration: 1.2, ease: "power3" }),
-          depth,
-        }));
-
-        const onMove = (e: MouseEvent) => {
-          const cx = window.innerWidth / 2;
-          const cy = window.innerHeight / 2;
-          const dx = e.clientX - cx;
-          const dy = e.clientY - cy;
-          cardMovers.forEach((m) => {
-            m.xTo(-dx * m.depth);
-            m.yTo(-dy * m.depth);
-          });
-          orbMovers.forEach((m) => {
-            m.xTo(-dx * m.depth);
-            m.yTo(-dy * m.depth);
-          });
-        };
-        window.addEventListener("mousemove", onMove);
-        ctx.add(() => window.removeEventListener("mousemove", onMove));
-
-        // ---- Magnetic CTA ----
-        const btn = magneticRef.current;
-        if (btn) {
-          const xTo = gsap.quickTo(btn, "x", { duration: 0.4, ease: "power3" });
-          const yTo = gsap.quickTo(btn, "y", { duration: 0.4, ease: "power3" });
-          const onBtnMove = (e: MouseEvent) => {
-            const r = btn.getBoundingClientRect();
-            xTo((e.clientX - (r.left + r.width / 2)) * 0.4);
-            yTo((e.clientY - (r.top + r.height / 2)) * 0.4);
-          };
-          const onBtnLeave = () => {
-            xTo(0);
-            yTo(0);
-          };
-          btn.addEventListener("mousemove", onBtnMove);
-          btn.addEventListener("mouseleave", onBtnLeave);
-          ctx.add(() => {
-            btn.removeEventListener("mousemove", onBtnMove);
-            btn.removeEventListener("mouseleave", onBtnLeave);
-          });
-        }
-      }
+      // Orb drift (xPercent + yPercent — independent from parallax x/y).
+      const drift = (
+        el: HTMLDivElement | null,
+        xp: number,
+        yp: number,
+        dur: number,
+        delay: number
+      ) => {
+        if (!el) return;
+        gsap.to(el, {
+          xPercent: xp,
+          yPercent: yp,
+          duration: dur,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+          delay,
+        });
+      };
+      drift(orb1Ref.current, 5, -4, 7, 0);
+      drift(orb2Ref.current, -5, 4, 9, 1);
+      drift(orb3Ref.current, 4, 5, 8, 0.5);
     }, heroRef);
 
-    return () => ctx.revert();
+    // ---- Pointer interactions (desktop, fine pointer only) ----
+    // Created outside the context so we fully own their listener cleanup.
+    const mq = window.matchMedia("(min-width: 1024px) and (pointer: fine)");
+    const disposers: Array<() => void> = [];
+
+    if (mq.matches) {
+      const cardEls = Array.from(root.querySelectorAll<HTMLElement>(".mock-card"));
+      const cardMovers = cardEls.map((node) => ({
+        xTo: gsap.quickTo(node, "x", { duration: 0.8, ease: "power3" }),
+        yTo: gsap.quickTo(node, "y", { duration: 0.8, ease: "power3" }),
+        depth: Number(node.dataset.depth ?? 0.05),
+      }));
+
+      const orbNodes = [orb1Ref.current, orb2Ref.current, orb3Ref.current];
+      const orbMovers = orbNodes.flatMap((node, i) =>
+        node
+          ? [
+              {
+                xTo: gsap.quickTo(node, "x", { duration: 1.2, ease: "power3" }),
+                yTo: gsap.quickTo(node, "y", { duration: 1.2, ease: "power3" }),
+                depth: ORB_DEPTHS[i] ?? 0.04,
+              },
+            ]
+          : []
+      );
+
+      const onMove = (e: MouseEvent) => {
+        const dx = e.clientX - window.innerWidth / 2;
+        const dy = e.clientY - window.innerHeight / 2;
+        for (const m of cardMovers) {
+          m.xTo(-dx * m.depth);
+          m.yTo(-dy * m.depth);
+        }
+        for (const m of orbMovers) {
+          m.xTo(-dx * m.depth);
+          m.yTo(-dy * m.depth);
+        }
+      };
+      window.addEventListener("mousemove", onMove);
+      disposers.push(() => window.removeEventListener("mousemove", onMove));
+
+      // Magnetic CTA
+      const btn = magneticRef.current;
+      if (btn) {
+        const bx = gsap.quickTo(btn, "x", { duration: 0.4, ease: "power3" });
+        const by = gsap.quickTo(btn, "y", { duration: 0.4, ease: "power3" });
+        const onBtnMove = (e: MouseEvent) => {
+          const r = btn.getBoundingClientRect();
+          bx((e.clientX - (r.left + r.width / 2)) * 0.4);
+          by((e.clientY - (r.top + r.height / 2)) * 0.4);
+        };
+        const onBtnLeave = () => {
+          bx(0);
+          by(0);
+        };
+        btn.addEventListener("mousemove", onBtnMove);
+        btn.addEventListener("mouseleave", onBtnLeave);
+        disposers.push(() => {
+          btn.removeEventListener("mousemove", onBtnMove);
+          btn.removeEventListener("mouseleave", onBtnLeave);
+        });
+      }
+    }
+
+    return () => {
+      disposers.forEach((fn) => fn());
+      ctx.revert();
+    };
   }, []);
 
   return (
@@ -349,7 +398,8 @@ export function HeroSection() {
               <div
                 key={card.id}
                 data-depth={card.depth}
-                className={`mock-card absolute ${card.position} ${card.rotate} w-52 rounded-2xl border border-[var(--color-border)] bg-white/90 p-4 shadow-[0_8px_40px_rgba(0,0,0,0.1)] backdrop-blur-sm`}
+                data-rot={card.baseRot}
+                className={`mock-card absolute ${card.position} w-52 rounded-2xl border border-[var(--color-border)] bg-white/90 p-4 shadow-[0_8px_40px_rgba(0,0,0,0.1)] backdrop-blur-sm`}
               >
                 <div className="mb-2 flex items-center gap-2">
                   <span className="text-base">{card.emoji}</span>
