@@ -6,6 +6,8 @@ import { updateNote } from "@/app/notes/action";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { PageEnter } from "@/components/PageEnter";
+import { ChevronLeft, PenLine } from "lucide-react";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -15,7 +17,6 @@ export default async function EditNotePage({ params }: Props) {
   const { id } = await params;
 
   const session = await auth();
-
   if (!session?.user?.id) redirect("/login");
 
   const note = await db
@@ -25,168 +26,86 @@ export default async function EditNotePage({ params }: Props) {
     .then((res) => res[0]);
 
   if (!note) notFound();
-
   if (note.userId !== Number(session.user.id)) notFound();
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--color-bg)" }}>
-      <main
-        style={{
-          maxWidth: "600px",
-          margin: "0 auto",
-          padding: "48px 24px 80px",
-        }}
-      >
-        {/* Back nav */}
-        <nav style={{ marginBottom: "32px" }}>
-          <Link
-            href={`/notes/${id}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-              fontSize: "13px",
-              color: "var(--color-muted)",
-              textDecoration: "none",
-              fontWeight: 500,
-            }}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M8.5 2.5 4 7l4.5 4.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Kembali
-          </Link>
-        </nav>
-
-        {/* Page heading */}
-        <header style={{ marginBottom: "28px" }}>
-          <h1
-            style={{
-              fontSize: "18px",
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              color: "var(--color-ink)",
-              margin: 0,
-            }}
-          >
-            Edit catatan
-          </h1>
-        </header>
-
-        {/* Edit form */}
-        <form action={updateNote}>
-          <input type="hidden" name="id" value={note.id} />
-
-          <div
-            style={{
-              padding: "20px",
-              backgroundColor: "var(--color-surface)",
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--color-border)",
-              marginBottom: "16px",
-            }}
-          >
-            <div style={{ marginBottom: "12px" }}>
-              <input
-                name="title"
-                defaultValue={note.title}
-                required
-                autoComplete="off"
-                style={{
-                  width: "100%",
-                  border: "none",
-                  background: "transparent",
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  color: "var(--color-ink)",
-                  outline: "none",
-                  fontFamily: "inherit",
-                  letterSpacing: "-0.01em",
-                  padding: 0,
-                }}
-              />
-            </div>
-            <div
-              style={{
-                height: "1px",
-                backgroundColor: "var(--color-border)",
-                marginBottom: "12px",
-              }}
-            />
-            <div>
-              <textarea
-                name="content"
-                defaultValue={note.content}
-                required
-                rows={6}
-                style={{
-                  width: "100%",
-                  border: "none",
-                  background: "transparent",
-                  fontSize: "14px",
-                  color: "var(--color-ink)",
-                  outline: "none",
-                  resize: "vertical",
-                  fontFamily: "inherit",
-                  lineHeight: 1.7,
-                  padding: 0,
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              type="submit"
-              style={{
-                backgroundColor: "var(--color-primary)",
-                color: "var(--color-primary-fg)",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                padding: "7px 16px",
-                fontSize: "13px",
-                fontWeight: 500,
-                cursor: "pointer",
-                fontFamily: "inherit",
-                letterSpacing: "0.01em",
-              }}
-            >
-              Simpan
-            </button>
+    <div className="min-h-screen bg-[var(--color-surface)]">
+      <PageEnter>
+        {/* Top nav */}
+        <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-white/80 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-3.5">
             <Link
               href={`/notes/${id}`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: "7px 16px",
-                fontSize: "13px",
-                fontWeight: 500,
-                color: "var(--color-muted)",
-                backgroundColor: "transparent",
-                border: "1px solid var(--color-border)",
-                borderRadius: "var(--radius-sm)",
-                textDecoration: "none",
-                letterSpacing: "0.01em",
-              }}
+              className="flex items-center gap-1 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-colors"
             >
-              Batal
+              <ChevronLeft size={14} />
+              Kembali
+            </Link>
+            <Link href="/" className="flex items-center gap-1.5">
+              <div
+                className="flex h-6 w-6 items-center justify-center rounded-md"
+                style={{ backgroundColor: "var(--color-ink)" }}
+              >
+                <PenLine size={12} className="text-white" />
+              </div>
             </Link>
           </div>
-        </form>
-      </main>
+        </header>
+
+        <main className="mx-auto max-w-2xl px-5 py-8 pb-20">
+          <div className="mb-5">
+            <h1 className="text-lg font-bold tracking-tight text-[var(--color-ink)]">
+              Edit catatan
+            </h1>
+          </div>
+
+          <form action={updateNote}>
+            <input type="hidden" name="id" value={note.id} />
+
+            <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-white shadow-sm transition-shadow focus-within:shadow-md">
+              <div className="px-5 pt-5">
+                <input
+                  name="title"
+                  defaultValue={note.title}
+                  required
+                  autoComplete="off"
+                  placeholder="Judul catatan..."
+                  className="w-full border-none bg-transparent text-sm font-semibold text-[var(--color-ink)] placeholder:text-[var(--color-muted)] outline-none"
+                  style={{ fontFamily: "inherit" }}
+                />
+              </div>
+              <div className="mx-5 my-3 h-px bg-[var(--color-border)]" />
+              <div className="px-5 pb-5">
+                <textarea
+                  name="content"
+                  defaultValue={note.content}
+                  required
+                  rows={8}
+                  placeholder="Tulis catatanmu..."
+                  className="w-full resize-none border-none bg-transparent text-sm leading-relaxed text-[var(--color-ink)] placeholder:text-[var(--color-muted)] outline-none"
+                  style={{ fontFamily: "inherit" }}
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer"
+                style={{ backgroundColor: "var(--color-ink)" }}
+              >
+                Simpan perubahan
+              </button>
+              <Link
+                href={`/notes/${id}`}
+                className="inline-flex items-center rounded-lg border border-[var(--color-border)] bg-white px-5 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-all hover:border-[var(--color-ink)] hover:text-[var(--color-ink)]"
+              >
+                Batal
+              </Link>
+            </div>
+          </form>
+        </main>
+      </PageEnter>
     </div>
   );
 }

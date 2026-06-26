@@ -1,77 +1,62 @@
-"use client"
+"use client";
 
 import { useRef } from "react";
 import { createNote } from "./action";
+import { CornerDownLeft } from "lucide-react";
 
 export default function NoteForm() {
+  const formRef = useRef<HTMLFormElement>(null);
 
-    const formRef = useRef<HTMLFormElement>(null)
-
-    function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-        if(event.key === "Enter" && !event.shiftKey){
-            event.preventDefault()
-            formRef.current?.requestSubmit()
-        } 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      formRef.current?.requestSubmit();
     }
+  }
+
   return (
     <form
-      ref= {formRef}
+      ref={formRef}
       action={createNote}
-      style={{
-        marginBottom: "40px",
-        padding: "20px",
-        backgroundColor: "var(--color-surface)",
-        borderRadius: "var(--radius-lg)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="mb-5 overflow-hidden rounded-xl border border-[var(--color-border)] bg-white shadow-sm transition-shadow focus-within:shadow-md"
     >
-      <div style={{ marginBottom: "12px" }}>
+      <div className="px-4 pt-4">
         <input
           name="title"
-          placeholder="Judul"
+          placeholder="Judul catatan..."
           required
           autoComplete="off"
-          style={{
-            width: "100%",
-            border: "none",
-            background: "transparent",
-            fontSize: "15px",
-            fontWeight: 600,
-            color: "var(--color-ink)",
-            outline: "none",
-            fontFamily: "inherit",
-            letterSpacing: "-0.01em",
-            padding: 0,
-          }}
+          className="w-full border-none bg-transparent text-sm font-semibold text-[var(--color-ink)] placeholder:text-[oklch(0.72_0.008_28)] outline-none"
+          style={{ fontFamily: "inherit" }}
         />
       </div>
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: "var(--color-border)",
-          marginBottom: "12px",
-        }}
-      />
-      <div style={{ marginBottom: "16px" }}>
+      <div className="mx-4 my-2 h-px bg-[var(--color-border)]" />
+      <div className="px-4">
         <textarea
           name="content"
-          placeholder="Tulis catatan..."
+          placeholder="Tulis catatanmu di sini... (Enter untuk simpan)"
           onKeyDown={handleKeyDown}
           required
-          rows={10}
-          style={{
-            width: "100%",
-            border: "none",
-            background: "transparent",
-            fontSize: "14px",
-            color: "var(--color-ink)",
-            outline: "none",
-            resize: "none",
-            fontFamily: "inherit",
-            lineHeight: 1.6,
-            padding: 0,
-          }}
+          rows={4}
+          className="w-full resize-none border-none bg-transparent text-sm leading-relaxed text-[var(--color-ink)] placeholder:text-[oklch(0.72_0.008_28)] outline-none"
+          style={{ fontFamily: "inherit" }}
         />
+      </div>
+      <div className="flex items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5">
+        <p className="text-xs text-[var(--color-muted)]">
+          <kbd className="rounded border border-[var(--color-border)] bg-white px-1.5 py-0.5 font-mono text-[10px]">
+            Enter
+          </kbd>{" "}
+          untuk menyimpan
+        </p>
+        <button
+          type="submit"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-all hover:opacity-90 active:scale-[0.97] cursor-pointer"
+          style={{ backgroundColor: "var(--color-ink)" }}
+        >
+          <CornerDownLeft size={12} />
+          Simpan
+        </button>
       </div>
     </form>
   );

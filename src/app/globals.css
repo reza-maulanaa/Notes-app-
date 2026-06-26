@@ -1,22 +1,23 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-bg:          oklch(1.000 0.000 0);
-  --color-surface:     oklch(0.968 0.002 28);
-  --color-border:      oklch(0.905 0.008 28);
-  --color-border-focus:oklch(0.548 0.210 28);
-  --color-ink:         oklch(0.145 0.015 28);
-  --color-muted:       oklch(0.480 0.009 28);
-  --color-primary:     oklch(0.548 0.210 28);
-  --color-primary-fg:  oklch(1.000 0.000 0);
-  --color-danger:      oklch(0.500 0.190 15);
-  --color-danger-muted:oklch(0.500 0.190 15 / 0.08);
+  --color-bg:           oklch(1.000 0.000 0);
+  --color-surface:      oklch(0.975 0.002 28);
+  --color-border:       oklch(0.918 0.006 28);
+  --color-border-focus: oklch(0.548 0.210 28);
+  --color-ink:          oklch(0.145 0.015 28);
+  --color-muted:        oklch(0.500 0.009 28);
+  --color-primary:      oklch(0.548 0.210 28);
+  --color-primary-fg:   oklch(1.000 0.000 0);
+  --color-danger:       oklch(0.500 0.190 15);
+  --color-danger-muted: oklch(0.500 0.190 15 / 0.08);
 
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
 
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
 *, *::before, *::after {
@@ -41,17 +42,15 @@ body {
   background-color: oklch(0.548 0.210 28 / 0.15);
 }
 
-/* Focus ring */
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* Transitions */
 @media (prefers-reduced-motion: no-preference) {
   a, button, input, textarea {
-    transition-property: color, background-color, border-color, opacity, box-shadow;
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform;
     transition-duration: 150ms;
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
