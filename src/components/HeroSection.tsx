@@ -435,7 +435,7 @@ export function HeroSection() {
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="feature-item group">
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white transition-all group-hover:-translate-y-0.5 group-hover:shadow-sm">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white transition-all group-hover:-translate-y-0.5 group-hover:shadow-sm">
                   <Icon size={17} style={{ color: "var(--color-primary)" }} />
                 </div>
                 <h3 className="mb-1 text-sm font-semibold text-[var(--color-ink)]">{title}</h3>
