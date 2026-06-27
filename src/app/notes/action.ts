@@ -5,7 +5,9 @@ import { notes } from "@/db/schema";
 import { revalidatePath } from "next/cache";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth, signIn } from "@/auth";
+
+
 
 export async function createNote(formData: FormData) {
   const session = await auth();
