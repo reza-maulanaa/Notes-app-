@@ -1,25 +1,6 @@
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { redirect } from "next/navigation";
-import bcrypt from "bcryptjs";
-import Link from "next/link";
 import { PenLine } from "lucide-react";
-
-async function registerAction(formData: FormData) {
-  "use server";
-
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  await db.insert(users).values({
-    email,
-    password: hashedPassword,
-  });
-
-  redirect("/login");
-}
+import { registerAction } from "./action";
+import Link from "next/link";  // ← ini yang bener
 
 export default function RegisterPage() {
   return (

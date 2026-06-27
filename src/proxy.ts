@@ -11,11 +11,13 @@ export default auth(async (req) => {
     pathname === "/" ||
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/register/check-email" ||
+    pathname === "/verify" ||
     pathname === "/notes";
 
   if (!isLoggedIn && !isPublicPage) {
-    const url = req.nextUrl.clone();   // ← clone URL yang udah valid
-    url.pathname = "/login";           // ← ganti path-nya doang
+    const url = req.nextUrl.clone(); // ← clone URL yang udah valid
+    url.pathname = "/login"; // ← ganti path-nya doang
     return NextResponse.redirect(url);
   }
 
