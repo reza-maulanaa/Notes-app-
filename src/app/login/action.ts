@@ -3,6 +3,9 @@ import { AuthError } from "next-auth";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 import { redirect } from "next/navigation";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
@@ -12,6 +15,9 @@ const ratelimit = new Ratelimit({
 export async function loginAction(formData: FormData) {
   "use server";
 
+  const email = formData.get("email") as string;
+
+  //RateLimit
   const ip = "anonymous";
   const { success } = await ratelimit.limit(ip);
 
@@ -19,9 +25,20 @@ export async function loginAction(formData: FormData) {
     redirect("/login?error=too_many_attempts");
   }
 
+  //Cek Email Verified
+  const user = await db
+  .select()
+  .from(users)
+  .where(eq(users.email, email))
+  .then(res => res[0])
+
+  if (user && !user.emailVerified) {
+    redirect("/login?error=email_not_verified")
+  }
+
   try {
     await signIn("credentials", {
-      email: formData.get("email"),
+      email,
       password: formData.get("password"),
       redirectTo: "/notes",
     });

@@ -10,7 +10,7 @@ const { mockLimit } = vi.hoisted(() => ({
 
 vi.mock("@upstash/ratelimit", () => ({
   Ratelimit: class {
-    limit = mockLimit;   // ← sekarang mockLimit udah ada waktu ini jalan
+    limit = mockLimit; // ← sekarang mockLimit udah ada waktu ini jalan
     static slidingWindow = vi.fn().mockReturnValue("mocked");
   },
 }));
@@ -52,9 +52,9 @@ vi.mock("@upstash/redis", () => ({
 }));
 
 vi.mock("@/auth", () => ({
-    auth: vi.fn(),
-    signIn: vi.fn()
-}))
+  auth: vi.fn(),
+  signIn: vi.fn(),
+}));
 
 //import setelahy mock (urutan penting!)
 import { deleteNote, createNote } from "@/app/notes/action";
@@ -118,10 +118,19 @@ describe("loginAction — rate limiting", () => {
     );
   });
 
-
   it("belum kena limit + password salah → redirect invalid_credentials", async () => {
     mockLimit.mockResolvedValue({ success: true }); // ← lolos limit
 
+    vi.mocked(db.select).mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi
+          .fn()
+          .mockResolvedValue([
+            { id: 1, email: "test@test.com", emailVerified: new Date() },
+          ]),
+      }),
+    } as any);
+    
     const { AuthError } = await import("next-auth");
     vi.mocked(signIn).mockRejectedValue(new AuthError());
 

@@ -69,14 +69,12 @@ export default async function LoginPage({ searchParams }: Props) {
               Email atau password salah.
             </div>
           )}
-
           {/* Sukses verifikasi */}
           {verified === "true" && (
             <div style={{ color: "green", marginBottom: "12px" }}>
               Email berhasil diverifikasi! Silakan login.
             </div>
           )}
-
           {/* Token expired */}
           {error === "token_expired" && (
             <div style={{ color: "red", marginBottom: "12px" }}>
@@ -84,7 +82,11 @@ export default async function LoginPage({ searchParams }: Props) {
               baru.
             </div>
           )}
-
+          {error === "email_not_verified" && (
+            <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-xs text-yellow-700">
+              Email belum diverifikasi. Cek inbox kamu dan klik link verifikasi.
+            </div>
+          )}
           {/* Social auth */}
           <div className="mb-4 grid grid-cols-2 gap-2">
             <form action={githubAction}>
@@ -129,7 +131,6 @@ export default async function LoginPage({ searchParams }: Props) {
               </button>
             </form>
           </div>
-
           {/* Divider */}
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
@@ -141,7 +142,6 @@ export default async function LoginPage({ searchParams }: Props) {
               </span>
             </div>
           </div>
-
           {/* Credentials form */}
           <form action={loginAction} className="space-y-3">
             <div>
