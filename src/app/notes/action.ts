@@ -97,4 +97,5 @@ export async function updateNote(formData: FormData) {
 
   revalidatePath("/notes");
   revalidatePath(`/notes/${id}`);
+  redirect(`/notes/${id}`);
 }

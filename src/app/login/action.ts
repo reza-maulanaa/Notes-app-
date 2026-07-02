@@ -3,6 +3,7 @@ import { AuthError } from "next-auth";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -17,8 +18,11 @@ export async function loginAction(formData: FormData) {
 
   const email = formData.get("email") as string;
 
-  //RateLimit
-  const ip = "anonymous";
+  const headersList = await headers();
+  const ip =
+    headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    headersList.get("x-real-ip") ??
+    "anonymous";
   const { success } = await ratelimit.limit(ip);
 
   if (!success) {

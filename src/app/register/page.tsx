@@ -1,8 +1,14 @@
 import { PenLine } from "lucide-react";
 import { registerAction } from "./action";
-import Link from "next/link";  // ← ini yang bener
+import Link from "next/link";
 
-export default function RegisterPage() {
+interface Props {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default async function RegisterPage({ searchParams }: Props) {
+  const { error } = await searchParams;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--color-surface)] px-4">
       {/* Subtle background pattern */}
@@ -39,6 +45,16 @@ export default function RegisterPage() {
 
         {/* Card */}
         <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+          {error === "email_taken" && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+              Email sudah terdaftar. Coba masuk atau gunakan email lain.
+            </div>
+          )}
+          {error === "invalid_input" && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+              Email tidak valid atau password kurang dari 8 karakter.
+            </div>
+          )}
           <form action={registerAction} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-[var(--color-ink)]">
